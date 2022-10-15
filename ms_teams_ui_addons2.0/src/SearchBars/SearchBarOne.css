@@ -1,0 +1,8 @@
+.results{
+    display: flex;
+    gap: 40px;
+   
+}
+#tags-standard,.btn,#tags-filled{
+    width: auto;
+}

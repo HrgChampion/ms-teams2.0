@@ -4,11 +4,14 @@ import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import { useState,useEffect } from "react";
 import debounce from 'lodash.debounce';
+import Button from '@mui/material/Button';
+import SendIcon from '@mui/icons-material/Send';
+import './SearchBarThree.css'
 const fetchData = async (query, cb) => {
 
     const res = await fetchSearchResults(query);
     console.log(res)
-    const data=res.map(a=>a.l)
+    const data=res?res.map(a=>a.l):[""];
     console.log("data",data)
     cb(data);
   };
@@ -47,6 +50,9 @@ export default function SearchBarThree() {
        setquery(e.target.value)
        
     }
+    function renderList(){
+        
+    }
 
       useEffect(() => {
         debouncedFetchData(query, res => {
@@ -58,6 +64,7 @@ export default function SearchBarThree() {
       <>
       <h1>API Search</h1>
     <Stack spacing={3} sx={{ width: 500 }}>
+    <div className="results">
       <Autocomplete
         multiple
         id="tags-standard"
@@ -74,7 +81,14 @@ export default function SearchBarThree() {
           />
         )}
       />
+      <div className="btn">
+       <Button variant="contained" endIcon={<SendIcon />} >
+        Send
+      </Button>
+      </div>
+      </div>
     </Stack>
+    {renderList()}
     </>
   );
 }

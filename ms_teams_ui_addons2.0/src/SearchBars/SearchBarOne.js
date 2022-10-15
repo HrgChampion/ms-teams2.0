@@ -3,10 +3,21 @@ import Chip from '@mui/material/Chip';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
-
+import Button from '@mui/material/Button';
+import SendIcon from '@mui/icons-material/Send';
+import './SearchBarOne.css'
+import { useState } from 'react';
 export default function SearchBarOne() {
+ const [values,setvalues]=useState()
+const [newvalues,setnewvalues]=useState([])
+function handleClick(){
+  console.log(1)
+  console.log("click",values)
+  setnewvalues(values)
+}
   return (
     <Stack spacing={3} sx={{ width: 500 }}>
+    <div className="results">
       <Autocomplete
         multiple
         id="tags-standard"
@@ -22,6 +33,13 @@ export default function SearchBarOne() {
           />
         )}
       />
+      <div className="btn">
+       <Button variant="contained" endIcon={<SendIcon />} >
+        Send
+      </Button>
+      </div>
+      <div>{}</div>
+      </div>
       <Autocomplete
         multiple
         id="tags-outlined"
@@ -37,17 +55,20 @@ export default function SearchBarOne() {
           />
         )}
       />
+      <div className="results">
       <Autocomplete
         multiple
         id="tags-filled"
         options={top100Films.map((option) => option.title)}
         defaultValue={[top100Films[13].title]}
         freeSolo
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
+        renderTags={(value, getTagProps) =>{ 
+          setvalues(values)
+          console.log(value)
+        return  value.map((option, index) => (
             <Chip variant="outlined" label={option} {...getTagProps({ index })} />
           ))
-        }
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -57,6 +78,13 @@ export default function SearchBarOne() {
           />
         )}
       />
+      <div className="btn">
+       <Button variant="contained" endIcon={<SendIcon />} onClick={handleClick}>
+        Send
+      </Button>
+      </div>
+      {newvalues.map(d=><div>{d}</div>)}
+      </div>
       
     </Stack>
   );
