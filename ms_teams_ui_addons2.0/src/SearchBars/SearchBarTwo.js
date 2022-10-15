@@ -19,7 +19,7 @@ export default function SearchBarTwo(){
             let data=await response.json();
 
             let videos=data.items;
-            appendVideos(videos)
+        //    appendVideos(videos)
             
             console.log("data:",data)
         }catch(e){
@@ -27,40 +27,25 @@ export default function SearchBarTwo(){
         }
     }
     const appendVideos=(items) =>{
-    //    results_div.innerHTML=null;
-        
+    
         items.forEach(element => {
-            let {snippet,
-                id:{videoId},
-            }=element;
+            let {snippet}=element;
             console.log("snippet:",snippet);
-            let div=document.createElement("div");
           
-            let title=document.createElement("p");
-            title.innerText=snippet.title;
-            let thumbnail=document.createElement("img");
-            thumbnail.src=snippet.thumbnails.medium.url;
+            return ( 
+          <div >
+            <p>{snippet.title}</p>
 
-            let data_to_send={
-                snippet,
-                videoId
-            }
-
-            div.onclick=()=>{
-                showVideo(data_to_send)
-            }
+           <img src={snippet.thumbnails.medium.url}/>
+               
+            </div>
 
 
-            div.append(thumbnail,title)
-
-        //    results_div.append(div);
+            )
         });
-        localStorage.setItem("appendimages",JSON.stringify(items))
+        
     }
-    function showVideo(data){
-        localStorage.setItem("clicked_video",JSON.stringify(data));
-        window.location.href="video.html"
-    }
+   
 
     return(
         <div>

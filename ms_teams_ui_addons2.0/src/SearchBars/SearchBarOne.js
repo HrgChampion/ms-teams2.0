@@ -12,7 +12,7 @@ export default function SearchBarOne() {
         id="tags-standard"
         options={top100Films}
         getOptionLabel={(option) => option.title}
-        defaultValue={[top100Films[13]]}
+        defaultValue={[top100Films[0]]}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -27,7 +27,7 @@ export default function SearchBarOne() {
         id="tags-outlined"
         options={top100Films}
         getOptionLabel={(option) => option.title}
-        defaultValue={[top100Films[13]]}
+        defaultValue={[top100Films[0]]}
         filterSelectedOptions
         renderInput={(params) => (
           <TextField
@@ -64,8 +64,8 @@ export default function SearchBarOne() {
 
 // Top 100 films as rated by IMDb users. http://www.imdb.com/chart/top
 const top100Films = [
-  { title: 'The Shawshank Redemption', year: 1994 },
   { title: 'The Godfather', year: 1972 },
+  { title: 'The Shawshank Redemption', year: 1994 },
   { title: 'The Godfather: Part II', year: 1974 },
   { title: 'The Dark Knight', year: 2008 },
   { title: '12 Angry Men', year: 1957 },
