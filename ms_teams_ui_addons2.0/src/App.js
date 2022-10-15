@@ -1,6 +1,6 @@
 import './App.css';
 import SearchBarOne from './SearchBars/SearchBarOne';
-import SearchBarTwo from './SearchBars/SearchBarTwo';
+// import SearchBarTwo from './SearchBars/SearchBarTwo';
 import SearchBarThree from './SearchBars/SearchBarThree';
 function App() {
   return (
