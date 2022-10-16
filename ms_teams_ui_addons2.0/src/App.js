@@ -8,9 +8,12 @@ function App() {
     <div className="App">
       <h1>Beagle 2.0</h1>
       <SearchBarOne/>
-      <SearchBarTwo/>
+      
       <SearchBarThree/>
       <SearchBarFour/>
+      <SearchBarTwo/>
+      <div className='space'></div>
+
     </div>
   );
 }

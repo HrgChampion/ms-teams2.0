@@ -4,14 +4,14 @@ import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import { useState,useEffect } from "react";
 import debounce from 'lodash.debounce';
-import Button from '@mui/material/Button';
-import SendIcon from '@mui/icons-material/Send';
+// import Button from '@mui/material/Button';
+// import SendIcon from '@mui/icons-material/Send';
 import './SearchBarThree.css'
 const fetchData = async (query, cb) => {
 
     const res = await fetchSearchResults(query);
     console.log(res)
-    const data=res?res.map(a=>a.l):[""];
+    const data=res?res.map(a=>a.name):[""];
     console.log("data",data)
     cb(data);
   };
@@ -22,17 +22,18 @@ const debouncedFetchData = debounce((query, cb) => {
   async function fetchSearchResults(query){
     try{
         
-        const options = {
-            method: 'GET',
-            headers: {
-                'X-RapidAPI-Key': 'fdb22aaabcmshed761697c53398dp1cb17fjsnc7b339b5da92',
-                'X-RapidAPI-Host': 'imdb8.p.rapidapi.com'
-            }
-        };
-        
-       let response=await fetch(`https://imdb8.p.rapidapi.com/auto-complete?q=${query}`, options)
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': '4250b39898msh8b6ea7e0fe9f2a1p1acb7cjsn6f12b150f10d',
+          'X-RapidAPI-Host': 'bing-video-search1.p.rapidapi.com'
+        }
+      };
+      
+    let response=await fetch(`https://bing-video-search1.p.rapidapi.com/videos/search?q=${query}`, options)
        let data=await response.json();
-       return data.d
+       console.log("i",data.value)
+       return data.value
     
     }catch(e){
         console.log("e:",e)
@@ -55,6 +56,7 @@ export default function SearchBarThree() {
         debouncedFetchData(query, res => {
           setResults(res);
         });
+        return () => clearTimeout(debouncedFetchData)
       }, [query]);
 
   return (
@@ -78,11 +80,11 @@ export default function SearchBarThree() {
           />
         )}
       />
-      <div className="btn">
+      {/* <div className="btn">
        <Button variant="contained" endIcon={<SendIcon />} >
         Send
       </Button>
-      </div>
+      </div> */}
       </div>
     </Stack>
     </>

@@ -33,12 +33,12 @@ function handleClick(){
           />
         )}
       />
-      <div className="btn">
+      {/* <div className="btn">
        <Button variant="contained" endIcon={<SendIcon />} >
         Send
       </Button>
       </div>
-      <div>{}</div>
+      <div>{}</div> */}
       </div>
       <Autocomplete
         multiple

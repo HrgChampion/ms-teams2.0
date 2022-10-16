@@ -7,13 +7,19 @@ import { useState,useEffect } from "react";
 import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
 import './SearchBarThree.css'
-
+import { Chip } from "@mui/material";
 
 
 export default function SearchBarFour() {
   const [results, setResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState('')
-
+  const [values,setvalues]=useState([])
+  const [newvalues,setnewvalues]=useState([])
+  function handleClick(){
+    console.log(1)
+    console.log("click",values)
+    setnewvalues(values)
+  }
    
     function handleChange(e){
         
@@ -23,11 +29,11 @@ export default function SearchBarFour() {
     async function fetchSearchResults(query){
         try{
             
-           
+          
 
             let data=await response.json();
 
-            let videos=data.items;
+            let videos=data.items.map(video=>video.snippet.title);
             console.log(videos)
            setResults(videos)
         
@@ -50,27 +56,35 @@ export default function SearchBarFour() {
       <h1>API Search Optimized</h1>
     <Stack spacing={3} sx={{ width: 500 }}>
     <div className="results">
-      <Autocomplete
+    <Autocomplete
         multiple
-        id="tags-standard"
+        id="tags-filled"
         options={results}
-        getOptionLabel={(option) => option.snippet.title}
-        // defaultValue={[results.length>0?results[0]:[]]}
+        // defaultValue={[top100Films[13].title]}
+        freeSolo
+        renderTags={(value, getTagProps) =>{ 
+          setvalues(value)
+          console.log(value)
+        return  value.map((option, index) => (
+            <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+          ))
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
-            variant="standard"
-            label="Multiple values"
+            variant="filled"
+            label="freeSolo"
             placeholder="Favorites"
             onChange={handleChange}
           />
         )}
       />
       <div className="btn">
-       <Button variant="contained" endIcon={<SendIcon />} >
+       <Button variant="contained" endIcon={<SendIcon />} onClick={handleClick}>
         Send
       </Button>
       </div>
+      {newvalues.map(d=><div>{d}</div>)}
       </div>
     </Stack>
     </>
