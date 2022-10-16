@@ -50,9 +50,6 @@ export default function SearchBarThree() {
        setquery(e.target.value)
        
     }
-    function renderList(){
-        
-    }
 
       useEffect(() => {
         debouncedFetchData(query, res => {
@@ -70,7 +67,7 @@ export default function SearchBarThree() {
         id="tags-standard"
         options={results}
         getOptionLabel={(option) => option}
-        defaultValue={[results.length>0?results[0]:[]]}
+        // defaultValue={[results.length>0?results[0]:[]]}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -88,7 +85,6 @@ export default function SearchBarThree() {
       </div>
       </div>
     </Stack>
-    {renderList()}
     </>
   );
 }

@@ -8,7 +8,7 @@ import SendIcon from '@mui/icons-material/Send';
 import './SearchBarOne.css'
 import { useState } from 'react';
 export default function SearchBarOne() {
- const [values,setvalues]=useState()
+ const [values,setvalues]=useState([])
 const [newvalues,setnewvalues]=useState([])
 function handleClick(){
   console.log(1)
@@ -60,10 +60,10 @@ function handleClick(){
         multiple
         id="tags-filled"
         options={top100Films.map((option) => option.title)}
-        defaultValue={[top100Films[13].title]}
+        // defaultValue={[top100Films[13].title]}
         freeSolo
         renderTags={(value, getTagProps) =>{ 
-          setvalues(values)
+          setvalues(value)
           console.log(value)
         return  value.map((option, index) => (
             <Chip variant="outlined" label={option} {...getTagProps({ index })} />

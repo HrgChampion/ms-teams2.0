@@ -111,7 +111,7 @@ const StyledTag = styled(Tag)(
 
 const Listbox = styled('ul')(
   ({ theme }) => `
-  width: 300px;
+  width: 600px;
   margin: 2px 0 0;
   padding: 0;
   position: absolute;
