@@ -6,6 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import { autocompleteClasses } from '@mui/material/Autocomplete';
 import './SEarchBarTwo.css'
+import EditableElement from './Edit';
 const Root = styled('div')(
   ({ theme }) => `
   color: ${
@@ -59,18 +60,21 @@ const InputWrapper = styled('div')(
 );
 
 function Tag(props) {
-  const { label, onDelete, ...other } = props;
+  const { label,  ...other } = props;
+  console.log(label)
   return (
     <div {...other}>
-      <span>{label}</span>
-      <CloseIcon onClick={onDelete} />
+    <EditableElement>
+      <span >{label}</span>
+      </EditableElement>
+      {/* <CloseIcon onClick={onDelete} /> */}
     </div>
   );
 }
 
 Tag.propTypes = {
   label: PropTypes.string.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  // onDelete: PropTypes.func.isRequired,
 };
 
 const StyledTag = styled(Tag)(
@@ -157,6 +161,9 @@ const Listbox = styled('ul')(
 );
 
 export default function CustomizedHook() {
+  function handleChange(e){
+console.log(e)
+  }
   const {
     getRootProps,
     getInputLabelProps,
@@ -174,6 +181,9 @@ export default function CustomizedHook() {
     multiple: true,
     options: top100Films,
     getOptionLabel: (option) => option.title,
+    autoHighlight:true,
+   openOnFocus:true
+  
   });
 
   return (
@@ -182,9 +192,10 @@ export default function CustomizedHook() {
       <div className='searchBarTwo'></div>
         <Label {...getInputLabelProps()} autoHighlight>Customized hook</Label>
         <div >{}</div>
-        <InputWrapper ref={setAnchorEl} className={focused ? 'focused' : ''} >
+        <InputWrapper ref={setAnchorEl} className={focused ? 'focused' : ''}  onChange={handleChange}>
           {value.map((option, index) => (
-            <StyledTag label={option.title} {...getTagProps({ index })} autoHighlight/>
+            
+            <EditableElement><StyledTag label={option.title} {...getTagProps({ index })} /></EditableElement>
           ))}
 
           <input {...getInputProps()} />

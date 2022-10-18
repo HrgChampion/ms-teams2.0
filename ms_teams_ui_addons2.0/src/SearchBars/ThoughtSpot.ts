@@ -747,3 +747,678 @@
 
 // // For debugging purposes
 // (window as any).cache = cache;
+
+
+
+
+
+
+// import { useTranslation } from '@thoughtspot/i18n';
+// import { Tour } from '@thoughtspot/radiant-react/widgets/tour';
+// import _ from 'lodash';
+// import React from 'react';
+// import { Subject } from 'rxjs';
+// import { Key } from 'w3c-keys';
+// import {
+//     SageRequestFlag,
+//     SageTokenInput,
+// } from '/@services/generated/graphql-types';
+// import {
+//     BlinkCompletionType,
+//     BlinkPhrase,
+//     BlinkToken,
+//     CaretPosition,
+// } from '/@services/search/search-client.util';
+// import {
+//     SearchAssistStatesV2,
+//     SearchAssistUIActionStates,
+// } from '/@services/search-assist-v2/search-assist.util';
+// import {
+//     useSageTourServiceHook,
+//     useSearchAssistSageState,
+// } from '/@services/search-assist-v2/search-assist-hooks';
+// import { EventType } from '/@utils/embed.util';
+// import {
+//     getTextForPhrases,
+//     isQueryEmpty,
+//     SageComponentBaseProps,
+// } from '/@utils/sage.utils';
+// import { SearchAssistStartEndCard } from '../../search-assist/search-assist-start-end-screen/search-assist-start-end-screen';
+// import { TokenBar } from '../../token-bar/token-bar';
+// import { TokenizerToken } from '../../token-bar/tokenizer/tokenizer.config';
+// import {
+//     TokenBarContentsUpdate,
+//     useTokenBarState,
+// } from '../../token-bar/use-token-bar-state';
+// import {
+//     SageCompletionsDropdown,
+//     SelectedCompletion,
+// } from './sage-completions-dropdown/sage-completions-dropdown';
+// import { useSageCompletionsDropdownState } from './sage-completions-dropdown/use-sage-completions-dropdown-state';
+// import styles from './sage-search-box.module.scss';
+// import {
+//     collectCompletionSelectedEvent,
+//     collectQueryEditedEvent,
+//     collectQueryFiredEvent,
+//     convertPhrasesToTokenBarTokens,
+//     getTokenBarTokenIdxAndOffsetForSageTokenIdx,
+//     getTransformedPhrasesUsingCompletion,
+//     getTransformedTokensUsingInputText,
+//     QueryFiredActionSource,
+// } from './sage-search-box.util';
+
+// export const SAGE_BAR_ID = 'sage-bar-tour-service-id';
+
+// interface Props extends SageComponentBaseProps {
+//     isNonInteractive: boolean;
+//     isFadedStyling: boolean;
+//     isWrapEnabled: boolean;
+//     isCompletionsLoading: boolean;
+//     clearAndFocusTokenBarAndRefreshCompletionsSubject: Subject<void>;
+//     onTextOrCaretPositionChanged: (
+//         updatedTokens: SageTokenInput[],
+//         caretTokenIdx: number,
+//         charOffsetInCaretToken: number,
+//         isBlurringOut: boolean,
+//         throttleable: boolean,
+//         sageRequestFlags?: SageRequestFlag[],
+//     ) => void;
+//     onContentOverflowChanged: (isContentOverflowed: boolean) => void;
+// }
+
+// // During the time it takes for new phrase data from sage to make its way down to this component
+// // (through various states and effects and hooks), it's possible that the user has already made a
+// // new keystroke, thereby causing the data from sage to become stale. In this hook, when we send
+// // the new phrase data we got from sage to the token bar, we let the token bar know that it should
+// // only apply those phrases if they textually match the current contents of the token bar (which
+// // should be the case if there has been no new keystroke). For other sources of phrase updation,
+// // such as completion selection, or external sources like adding from left panel, we do not perform
+// // this gating check, and always apply the new phrases.
+// const usePhrases = (
+//     newPhrases: BlinkPhrase[],
+//     isPhraseDataUpdatedExternally: boolean,
+//     updateTokenBarContents: (contentsUpdate: TokenBarContentsUpdate) => void,
+//     dispatchEmbedEvent: (event: string, data: any) => void,
+//     isSearchAssistEnabled?: boolean,
+// ) => {
+//     const [phrases, setPhrases] = React.useState(newPhrases);
+//     const [tokenBarTokens, setTokenBarTokens] = React.useState<
+//         TokenizerToken[]
+//     >([]);
+
+//     React.useEffect(() => {
+//         if (!newPhrases || newPhrases.length === 0) {
+//             return;
+//         }
+
+//         setPhrases(newPhrases);
+
+//         const newTokens = convertPhrasesToTokenBarTokens(
+//             newPhrases,
+//             isSearchAssistEnabled,
+//         );
+//         setTokenBarTokens(newTokens);
+
+//         dispatchEmbedEvent(EventType.QueryChanged, {
+//             search: getTextForPhrases(newPhrases),
+//         });
+
+//         // We must update the token bar only after the setPhrases call above has executed and the
+//         // phrases state variable contains the most up-to-date phrase data. This is because
+//         // updating the token bar contents may result in the token bar itself triggering a new
+//         // onTextOrCaretPositionChanged call (eg if the caret is automatically moved out of a token
+//         // as a result of the new phrase data). If that happens, we need to read the current
+//         // phrases in order to form the resulting new sage request. Since we just set the phrases
+//         // above, the current phrases returned by this hook during this render cycle will still be
+//         // the old phrases, which are now stale. Only in the next render cycle would the updated
+//         // phrases actually be seen by the sage box, and hence we only want to trigger this whole
+//         // chain after these updated phrases are available. Putting our update at the end of the
+//         // event queue will ensure the setPhrases call above runs first and propogates the new
+//         // phrases to the sage box, before our below callback updates the token bar.
+//         queueMicrotask(() => {
+//             updateTokenBarContents({
+//                 ignoreIfTokenTextDoesNotMatch: !isPhraseDataUpdatedExternally,
+//                 newTokens,
+//             });
+//         });
+//     }, [newPhrases]);
+
+//     // An update to the phrases through this callback will always set the new phrases in the token
+//     // bar, regardless of whether it matches the current text in there
+//     const setPhrasesAndUpdateTokenBar = (
+//         updatedPhrases: BlinkPhrase[],
+//         caretPhraseIdx: number,
+//         charOffsetInCaretPhrase: number,
+//         moveCaretOutFromPhraseEnd: boolean,
+//     ) => {
+//         setPhrases(updatedPhrases);
+
+//         const newTokens = convertPhrasesToTokenBarTokens(
+//             updatedPhrases,
+//             isSearchAssistEnabled,
+//         );
+//         setTokenBarTokens(newTokens);
+//         updateTokenBarContents({
+//             ignoreIfTokenTextDoesNotMatch: false,
+//             newTokens,
+//             // Sage phrases = token bar tokens, hence the change in terminology for below arguments
+//             newCaretTokenIdx: caretPhraseIdx,
+//             newCharOffsetInCaretToken: charOffsetInCaretPhrase,
+//             moveCaretOutFromTokenEnd: moveCaretOutFromPhraseEnd,
+//         });
+//     };
+
+//     return {
+//         phrases,
+//         tokenBarTokens,
+//         setPhrasesAndUpdateTokenBar,
+//     };
+// };
+
+// let searchAssistSageState: ReturnType<typeof useSearchAssistSageState>;
+// export const getSearchAssistSageState = () => searchAssistSageState;
+
+// export const SageSearchBox: React.FC<Props> = (props: Props) => {
+//     const { t } = useTranslation();
+
+//     // Assignments are further below, definitions are needed here to allow usage from within
+//     // callback functions
+//     let sageCompletionsDropdownState: ReturnType<typeof useSageCompletionsDropdownState>;
+//     let tokenBarState: ReturnType<typeof useTokenBarState>;
+
+//     let phrasesState: ReturnType<typeof usePhrases>;
+
+//     // When expanding a folded completion, we need to remember that we are disambiguating a folded
+//     // completion in case the user clicks "more" while doing so. If that happens, we need to keep
+//     // showing matches for that fold in the request to get more completions. If the user makes any
+//     // other interaction however, we can get out of this mode.
+//     const [
+//         isDisambiguatingFoldedCompletion,
+//         setIsDisambiguatingFoldedCompletion,
+//     ] = React.useState(false);
+
+//     const blurTokenBarAndSubmitSearch = (): void => {
+//         tokenBarState.blur();
+//         props.onSearchSubmitted();
+//     };
+
+//     // Given text and a caret position, computes the new set of sage tokens and notifies the parent
+//     // that the contents have changed, which will trigger a new sage request to refresh the tokens
+//     // and obtain new completions. If either the text or caret position are not specified, we will
+//     // obtain them from the token bar directly.
+//     const onTextOrCaretPositionChanged = ({
+//         newText = tokenBarState.getCurrentText(),
+//         newCaretPosition = tokenBarState.getAbsoluteCaretPosition(),
+//         isBlurringOut = false,
+//         throttleable = false,
+//         sageRequestFlags,
+//     }: {
+//         newText?: string;
+//         newCaretPosition?: CaretPosition;
+//         isBlurringOut?: boolean;
+//         throttleable?: boolean;
+//         sageRequestFlags?: SageRequestFlag[];
+//     } = {}) => {
+//         if (isDisambiguatingFoldedCompletion) {
+//             setIsDisambiguatingFoldedCompletion(false);
+//         }
+
+//         const {
+//             newFlatTokens,
+//             caretTokenIdx,
+//             charOffsetInCaretToken,
+//         } = getTransformedTokensUsingInputText(
+//             phrasesState.phrases,
+//             newText,
+//             newCaretPosition,
+//         );
+
+//         props.onTextOrCaretPositionChanged(
+//             newFlatTokens,
+//             caretTokenIdx,
+//             charOffsetInCaretToken,
+//             isBlurringOut,
+//             throttleable,
+//             sageRequestFlags,
+//         );
+//     };
+
+//     const onFocusChanged = (isFocused: boolean): void => {
+//         sageCompletionsDropdownState.onFocusChanged(isFocused);
+//         props.onFocusChanged(isFocused);
+
+//         if (!isFocused) {
+//             // Mark the token containing the caret as pending, to avoid having it potentially flash
+//             // red while we wait for the sage response to come back
+//             // TODO(Rifdhan): in the future, we can improve this to only mark the token as pending
+//             // if we know the user actually edited this token
+//             tokenBarState.applyCssClassesToCaretTokenIfNotEmpty(
+//                 styles.pendingToken,
+//             );
+
+//             // Perform a retokenization on blur to apply any potential changes
+//             onTextOrCaretPositionChanged({
+//                 newCaretPosition: null,
+//                 isBlurringOut: true,
+//                 sageRequestFlags: [SageRequestFlag.DoBestEffortTokenization],
+//             });
+//         }
+//     };
+
+//     React.useEffect(() => {
+//         if (!props.blurAndSubmitSearchSubject) {
+//             return _.noop;
+//         }
+
+//         const subscription = props.blurAndSubmitSearchSubject.subscribe(() => {
+//             blurTokenBarAndSubmitSearch();
+//         });
+//         return () => subscription.unsubscribe();
+//     });
+
+//     React.useEffect(() => {
+//         if (!props.placeCaretAfterTokenAtIdxSubject) {
+//             return _.noop;
+//         }
+
+//         const subscription = props.placeCaretAfterTokenAtIdxSubject.subscribe(
+//             (sageTokenIdx: number) => {
+//                 // Focus token bar if it is not already in focus
+//                 if (!tokenBarState.hasFocus()) {
+//                     tokenBarState.focus();
+//                     onFocusChanged(true);
+//                 }
+
+//                 if (sageTokenIdx === -1) {
+//                     tokenBarState.moveCaretIntoEndOfText();
+//                 } else {
+//                     const {
+//                         tokenIdx,
+//                         charOffsetInToken,
+//                     } = getTokenBarTokenIdxAndOffsetForSageTokenIdx(
+//                         props.phrases,
+//                         sageTokenIdx,
+//                     );
+
+//                     tokenBarState.moveCaretIntoToken(
+//                         tokenIdx,
+//                         charOffsetInToken,
+//                     );
+//                 }
+
+//                 // Must call this to get new completions for the new position
+//                 onTextOrCaretPositionChanged();
+//             },
+//         );
+//         return () => subscription.unsubscribe();
+//     });
+
+//     const focusTokenBarAndRefreshCompletions = (): void => {
+//         tokenBarState.focus();
+//         onFocusChanged(true);
+//         onTextOrCaretPositionChanged();
+//     };
+
+//     const clearAndFocusTokenBarAndRefreshCompletions = (): void => {
+//         tokenBarState.clearTokens();
+//         focusTokenBarAndRefreshCompletions();
+//     };
+
+//     const clearTokenBarAndRefreshCompletions = (): void => {
+//         tokenBarState.clearTokens();
+//         onTextOrCaretPositionChanged();
+//     };
+
+//     React.useEffect(() => {
+//         const subscription = props.clearAndFocusTokenBarAndRefreshCompletionsSubject.subscribe(
+//             () => {
+//                 clearAndFocusTokenBarAndRefreshCompletions();
+//             },
+//         );
+//         return () => subscription.unsubscribe();
+//     });
+
+//     const onTokenBarInitializationComplete = (): void => {
+//         if (props.isFocusedOnInit) {
+//             onFocusChanged(true);
+//         }
+
+//         // When the token bar is done initializing, we want to make a sage request to get our first
+//         // set of completions. We obviously don't need to do this if the sage bar is not in focus,
+//         // but we also check if the tokens sent from the parent are now different from what is in
+//         // the token bar as a final sanity check. If these are different, it means the parent has
+//         // already changed the tokens from the initial set, so we should not trigger a new request
+//         // since it would reset the tokens back to the initial set.
+//         if (
+//             !props.isFocusedOnInit ||
+//             getTextForPhrases(props.phrases).trim() !==
+//                 tokenBarState.getCurrentText().trim()
+//         ) {
+//             return;
+//         }
+
+//         // This will trigger the first sage request to get our initial set of completions
+//         onTextOrCaretPositionChanged();
+//     };
+
+//     // The extra operation we do here is update the highlight state of the completions dropdown.
+//     // This is only necessary if the user typed something in the token bar, for other sources of
+//     // contents changing (eg parent told us to move caret to a desired position), we do not want to
+//     // update the highlight state of the completions dropdown.
+//     function onTokenBarTextOrCaretPositionChanged(
+//         newText: string,
+//         newCaretPosition: CaretPosition,
+//         isDeletion: boolean,
+//     ): void {
+//         collectQueryEditedEvent(
+//             props.metricsService,
+//             isDeletion,
+//             newText.length,
+//             newCaretPosition,
+//             props.mixpanelAnswerData,
+//         );
+
+//         // Even if only the caret position changed, we still need to update the completions
+//         // dropdown so the highlight state reflects the edited token at the new caret position
+//         sageCompletionsDropdownState.onEditedTokenTextChanged(isDeletion);
+
+//         onTextOrCaretPositionChanged({
+//             newText,
+//             newCaretPosition,
+//             throttleable: true,
+//         });
+//     }
+
+//     function onKeyDown(evt: KeyboardEvent): boolean {
+//         const wasHandled = sageCompletionsDropdownState.onKeyDown(evt);
+//         if (wasHandled) {
+//             evt.preventDefault();
+//             evt.stopPropagation();
+//             return false;
+//         }
+
+//         // If we did not select a completion on enter press, then blur and submit the search (same
+//         // for escape press)
+//         if (evt.key === Key.Enter || evt.key === Key.Escape) {
+//             if (
+//                 searchAssistSageState.searchAssistOptions.uiActionState ===
+//                 SearchAssistUIActionStates.START
+//             ) {
+//                 searchAssistSageState.searchAssistOptions.updateActionRunnerState();
+//             }
+//             const keyPressed =
+//                 evt.key === Key.Enter
+//                     ? QueryFiredActionSource.ENTER
+//                     : QueryFiredActionSource.ESCAPE;
+//             collectQueryFiredEvent(
+//                 props.metricsService,
+//                 keyPressed,
+//                 props.mixpanelAnswerData,
+//             );
+//             blurTokenBarAndSubmitSearch();
+
+//             evt.preventDefault();
+//             evt.stopPropagation();
+//             return false;
+//         }
+
+//         // Prevent default behavior of backspace in empty sage bar (can potentially misplace the
+//         // cursor) [SCAL-32401]
+//         if (
+//             evt.key === Key.Backspace &&
+//             tokenBarState.getCurrentText().length === 0
+//         ) {
+//             evt.preventDefault();
+//             evt.stopPropagation();
+//             return false;
+//         }
+
+//         return true;
+//     }
+
+//     searchAssistSageState = useSearchAssistSageState(
+//         props.searchAssistClient,
+//         props.searchAssistResponse,
+//         clearAndFocusTokenBarAndRefreshCompletions,
+//         clearTokenBarAndRefreshCompletions,
+//         focusTokenBarAndRefreshCompletions,
+//         props.metricsService,
+//         blurTokenBarAndSubmitSearch,
+//         props.mixpanelSageData,
+//     );
+
+//     tokenBarState = useTokenBarState(
+//         !!props.isNonInteractive,
+//         props.isFadedStyling,
+//         props.isFocusedOnInit,
+//         styles.pendingToken,
+//         () => phrasesState.tokenBarTokens,
+//         onTokenBarInitializationComplete,
+//         props.onContentOverflowChanged,
+//         onFocusChanged,
+//         onTokenBarTextOrCaretPositionChanged,
+//         onKeyDown,
+//     );
+
+//     // This must be initialized after the token bar state, since the token bar state has to set up
+//     // its listener to the observable which this hook might emit on
+//     phrasesState = usePhrases(
+//         props.phrases,
+//         props.isPhraseDataUpdatedExternally,
+//         (contentsUpdate: TokenBarContentsUpdate) =>
+//             tokenBarState.updateContents(contentsUpdate),
+//         props.dispatchEmbedEvent,
+//         searchAssistSageState.searchAssistOptions.searchAssistEnabled,
+//     );
+
+//     const { tourSteps, runTour } = useSageTourServiceHook(
+//         tokenBarState.hasFocus(),
+//         searchAssistSageState.searchAssistOptions.searchAssistState,
+//         searchAssistSageState.searchAssistOptions.uiActionState,
+//         SAGE_BAR_ID,
+//         t('searchAssist.tour.focusSage'),
+//     );
+
+//     const onCompletionSelected = (selection: SelectedCompletion): void => {
+//         collectCompletionSelectedEvent(
+//             props.metricsService,
+//             selection,
+//             props.mixpanelAnswerData,
+//         );
+
+//         if (selection.didSelectShowMore) {
+//             sageCompletionsDropdownState.onGetMoreCompletionsSelected();
+
+//             const {
+//                 newFlatTokens,
+//                 caretTokenIdx,
+//                 charOffsetInCaretToken,
+//             } = getTransformedTokensUsingInputText(
+//                 phrasesState.phrases,
+//                 tokenBarState.getCurrentText(),
+//                 tokenBarState.getAbsoluteCaretPosition(),
+//             );
+
+//             props.getMoreCompletions(
+//                 newFlatTokens,
+//                 caretTokenIdx,
+//                 charOffsetInCaretToken,
+//                 isDisambiguatingFoldedCompletion
+//                     ? [SageRequestFlag.ExactMatchCompletionsOnly]
+//                     : undefined,
+//             );
+//         } else if (selection.selectedCompletion) {
+//             if (isDisambiguatingFoldedCompletion) {
+//                 setIsDisambiguatingFoldedCompletion(false);
+//             }
+
+//             const isFoldedCompletion =
+//                 selection.selectedCompletion.type ===
+//                 BlinkCompletionType.Folded;
+//             if (isFoldedCompletion) {
+//                 setIsDisambiguatingFoldedCompletion(true);
+//             }
+
+//             const {
+//                 newPhrases,
+//                 resultingAbsoluteCaretTokenIdx,
+//                 optimisticUpdateData,
+//             } = getTransformedPhrasesUsingCompletion(
+//                 phrasesState.phrases,
+//                 selection.selectedCompletion,
+//             );
+
+//             // We want to update the UI immediately without having to wait for the network request
+//             // to go through, so use the optimistic update data to do that
+//             sageCompletionsDropdownState.removeCompletionHighlight();
+//             phrasesState.setPhrasesAndUpdateTokenBar(
+//                 optimisticUpdateData.newPhrases,
+//                 optimisticUpdateData.resultingCaretPhraseIdx,
+//                 optimisticUpdateData.resultingCharOffsetInCaretPhrase,
+//                 optimisticUpdateData.moveCaretOutFromPhraseEnd,
+//             );
+
+//             // Make the network request with the full set of phrases (including empty phrases)
+//             const newFlatTokens: BlinkToken[] = newPhrases.flatMap(
+//                 phrase => phrase.tokens,
+//             );
+//             props.onTextOrCaretPositionChanged(
+//                 newFlatTokens,
+//                 resultingAbsoluteCaretTokenIdx,
+//                 // We do not bother to compute this because the completions from sage should be the
+//                 // same regardless of where inside a token the caret is (eg "|tax" vs "t|ax" vs
+//                 // "tax|" all yield the same completions)
+//                 0,
+//                 false,
+//                 false,
+//                 isFoldedCompletion
+//                     ? [SageRequestFlag.ExactMatchCompletionsOnly]
+//                     : undefined,
+//             );
+//         }
+//     };
+
+//     sageCompletionsDropdownState = useSageCompletionsDropdownState(
+//         props.metricsService,
+//         props.isInitialRequestComplete,
+//         props.isCompletionsLoading,
+//         props.hasError,
+//         props.completionsNotPossible,
+//         props.completions,
+//         props.hasMoreCompletions &&
+//             searchAssistSageState.searchAssistOptions.searchAssistState !==
+//                 SearchAssistStatesV2.IN_PROGRESS,
+//         isDisambiguatingFoldedCompletion,
+//         tokenBarState.getCurrentlyEditedTokenText,
+//         tokenBarState.getCaretTokenPosition,
+//         onCompletionSelected,
+//         props.mixpanelAnswerData,
+//     );
+
+//     function isPlaceholderVisible(): boolean {
+//         return (
+//             !tokenBarState.hasFocus() &&
+//             isQueryEmpty(phrasesState.phrases) &&
+//             tokenBarState.getCurrentText().length === 0
+//         );
+//     }
+
+//     const shouldShowCompletionsDropdown = (): boolean => {
+//         return (
+//             sageCompletionsDropdownState.isVisible &&
+//             searchAssistSageState.showCompletionDropdown
+//         );
+//     };
+
+//     const startEndCardClickCB = () => {
+//         searchAssistSageState.searchAssistOptions.setShowStartEndCard(false);
+//         focusTokenBarAndRefreshCompletions();
+//     };
+
+//     return (
+//         <>
+//             <Tour
+//                 steps={tourSteps}
+//                 run={runTour}
+//                 showCloseButton={false}
+//                 continuous={false}
+//                 disableOverlay
+//             />
+//             <div
+//                 className={styles.bkSageSearchBox}
+//                 id={SAGE_BAR_ID}
+//                 data-tooltip-content={props.bodyTooltip}
+//                 data-tooltip-position="bottom"
+//             >
+//                 <div className={styles.bkSageTextContent}>
+//                     {isPlaceholderVisible() && (
+//                         <div className={styles.bkSagePlaceholderContainer}>
+//                             <div className={styles.bkSagePlaceholderText}>
+//                                 {props.placeholderText}
+//                             </div>
+//                         </div>
+//                     )}
+//                     <TokenBar
+//                         setElement={tokenBarState.setTokenizerElement}
+//                         isNonInteractive={tokenBarState.isNonInteractive}
+//                         isFadedStyling={tokenBarState.isFadedStyling}
+//                         isWrapEnabled={props.isWrapEnabled}
+//                         className={tokenBarState.className}
+//                     />
+//                 </div>
+//                 {searchAssistSageState.searchAssistOptions.showStartEndCard && (
+//                     <SearchAssistStartEndCard
+//                         primaryText={t('searchAssistStartScreen.heading')}
+//                         secondaryText={
+//                             searchAssistSageState.searchAssistOptions
+//                                 .searchAssistLessonDescription
+//                         }
+//                         buttonText={t('searchAssistStartScreen.BtnText')}
+//                         buttonOnClick={startEndCardClickCB}
+//                         position={sageCompletionsDropdownState.position}
+//                         showWatermark
+//                         accessibleLessonIndex={props.searchAssistClient.getCurrentActiveLesson()}
+//                         totalAccessibleLessons={props.searchAssistClient.getTotalAccessibleLessons()}
+//                         showLessonNumer={props.searchAssistClient.showLessonNumberSpotlight()}
+//                     />
+//                 )}
+//                 {shouldShowCompletionsDropdown() && (
+//                     <SageCompletionsDropdown
+//                         positionStyle={sageCompletionsDropdownState.position}
+//                         isInitialLoading={
+//                             sageCompletionsDropdownState.isInitialLoading
+//                         }
+//                         isUpdateLoading={
+//                             sageCompletionsDropdownState.isUpdateLoading
+//                         }
+//                         isShowMoreLoading={
+//                             sageCompletionsDropdownState.isShowMoreLoading
+//                         }
+//                         hasError={sageCompletionsDropdownState.hasError}
+//                         completions={sageCompletionsDropdownState.completions}
+//                         isShowMoreVisible={
+//                             sageCompletionsDropdownState.isShowMoreVisible
+//                         }
+//                         highlightedCompletionIdx={
+//                             sageCompletionsDropdownState.highlightedCompletionIdx
+//                         }
+//                         onCompletionSelected={onCompletionSelected}
+//                         shouldShowSearchAssistHelper={
+//                             searchAssistSageState.searchAssistOptions
+//                                 .searchAssistState ===
+//                             SearchAssistStatesV2.IN_PROGRESS
+//                         }
+//                         searchAssistLessonAdvice={
+//                             searchAssistSageState.searchAssistOptions
+//                                 .searchAssistLessonAdvice
+//                         }
+//                         searchAssistQuestion={
+//                             searchAssistSageState.searchAssistOptions
+//                                 .searchAssistLessonDescription
+//                         }
+//                     />
+//                 )}
+//             </div>
+//         </>
+//     );
+// };

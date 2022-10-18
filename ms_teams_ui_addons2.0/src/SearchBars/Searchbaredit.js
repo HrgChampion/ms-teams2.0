@@ -2,10 +2,9 @@ import React from 'react';
 
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
-
-
+import EditableElement from './Edit';
 const animatedComponents = makeAnimated();
-
+console.log(animatedComponents)
 export default function AnimatedMulti() {
     let colourOptions=[
         { value: 'ocean', label: 'Ocean', color: '#00B8D9' },
@@ -21,14 +20,25 @@ export default function AnimatedMulti() {
       ];
   return (
       <div style={{"width":"600px"}}>
+      {/* <ContentEditable
+          className="editable"
+          tagName="pre"
+          html={this.state.html} // innerHTML of the editable div
+          disabled={!this.state.editable} // use true to disable edition
+          onChange={this.handleChange} // handle innerHTML change
+          onBlur={this.sanitize}
+        /> */}
+         <EditableElement>
     <Select
       closeMenuOnSelect={false}
       components={animatedComponents}
        defaultValue={[colourOptions[4]]}
       isMulti
       options={colourOptions}
-      contenteditable="true"
+      contenteditable={true}
+      
     />
+    </EditableElement>
     </div>
   );
 }
