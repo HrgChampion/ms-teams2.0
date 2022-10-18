@@ -180,18 +180,18 @@ export default function CustomizedHook() {
     <Root>
       <div {...getRootProps()} >
       <div className='searchBarTwo'></div>
-        <Label {...getInputLabelProps()} >Customized hook</Label>
+        <Label {...getInputLabelProps()} autoHighlight>Customized hook</Label>
         <div >{}</div>
-        <InputWrapper ref={setAnchorEl} className={focused ? 'focused' : ''}>
+        <InputWrapper ref={setAnchorEl} className={focused ? 'focused' : ''} >
           {value.map((option, index) => (
-            <StyledTag label={option.title} {...getTagProps({ index })} />
+            <StyledTag label={option.title} {...getTagProps({ index })} autoHighlight/>
           ))}
 
           <input {...getInputProps()} />
         </InputWrapper>
       </div>
       {groupedOptions.length > 0 ? (
-        <Listbox {...getListboxProps()}>
+        <Listbox {...getListboxProps()} >
           {groupedOptions.map((option, index) => (
             <li {...getOptionProps({ option, index })}>
               <span>{option.title}</span>

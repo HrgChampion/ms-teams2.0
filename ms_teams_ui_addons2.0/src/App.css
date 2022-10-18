@@ -3,5 +3,8 @@
     overflow: auto;
 }
 .space{
-    margin-bottom: 500px;
+    margin-bottom: 1000px;
+}
+.spacing{
+    margin-bottom: 100px;
 }

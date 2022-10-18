@@ -18,7 +18,7 @@ const fetchData = async (query, cb) => {
 
 const debouncedFetchData = debounce((query, cb) => {
     fetchData(query, cb);
-  }, 2000);
+  }, 0);
   async function fetchSearchResults(query){
     try{
         
@@ -56,7 +56,7 @@ export default function SearchBarThree() {
         debouncedFetchData(query, res => {
           setResults(res);
         });
-        return () => clearTimeout(debouncedFetchData)
+          // return () => clearTimeout(debouncedFetchData)
       }, [query]);
 
   return (
@@ -69,6 +69,8 @@ export default function SearchBarThree() {
         id="tags-standard"
         options={results}
         getOptionLabel={(option) => option}
+        autoHighlight
+        loading
         // defaultValue={[results.length>0?results[0]:[]]}
         renderInput={(params) => (
           <TextField

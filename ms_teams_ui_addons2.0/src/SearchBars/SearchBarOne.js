@@ -15,6 +15,16 @@ function handleClick(){
   console.log("click",values)
   setnewvalues(values)
 }
+function handleChange(e){
+  console.log(e)
+if(e.key==="Backspace"){
+  console.log(e.target.outerText)
+}
+console.log(e.target.value)
+}
+function handleChangeSolo(e){
+ 
+  }
   return (
     <Stack spacing={3} sx={{ width: 500 }}>
     <div className="results">
@@ -23,14 +33,21 @@ function handleClick(){
         id="tags-standard"
         options={top100Films}
         getOptionLabel={(option) => option.title}
+        // isOptionEqualToValue={(option, value) => console.log(option,value)}
         defaultValue={[top100Films[0]]}
+        autoHighlight
+        onChange={handleChange}
+        
         renderInput={(params) => (
           <TextField
             {...params}
             variant="standard"
             label="Multiple values"
             placeholder="Favorites"
+            value={'hi'}
+           
           />
+          
         )}
       />
       {/* <div className="btn">
@@ -39,6 +56,7 @@ function handleClick(){
       </Button>
       </div>
       <div>{}</div> */}
+      
       </div>
       <Autocomplete
         multiple
@@ -46,6 +64,7 @@ function handleClick(){
         options={top100Films}
         getOptionLabel={(option) => option.title}
         defaultValue={[top100Films[0]]}
+        autoHighlight
         filterSelectedOptions
         renderInput={(params) => (
           <TextField
@@ -61,6 +80,7 @@ function handleClick(){
         id="tags-filled"
         options={top100Films.map((option) => option.title)}
         // defaultValue={[top100Films[13].title]}
+        autoHighlight
         freeSolo
         renderTags={(value, getTagProps) =>{ 
           setvalues(value)
@@ -75,6 +95,7 @@ function handleClick(){
             variant="filled"
             label="freeSolo"
             placeholder="Favorites"
+            onChange={handleChangeSolo}
           />
         )}
       />

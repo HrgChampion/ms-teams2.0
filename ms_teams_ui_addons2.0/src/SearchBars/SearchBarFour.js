@@ -11,7 +11,7 @@ import { Chip } from "@mui/material";
 
 
 export default function SearchBarFour() {
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(['show me sales data']);
   const [searchTerm, setSearchTerm] = useState('')
   const [values,setvalues]=useState([])
   const [newvalues,setnewvalues]=useState([])
@@ -29,13 +29,25 @@ export default function SearchBarFour() {
     async function fetchSearchResults(query){
         try{
             
+          // let response=await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=AIzaSyDbcAeK5Y2du9DREO7NSvCGOfCn5xDSpPo&maxResults=20&safeSearch=strict&q=${query}`);
+
+          //   let data=await response.json();
+
+          //   let videos=data.items.map(video=>video.snippet.title);
+          //   console.log(videos)
+          //  setResults(videos)
+          const options = {
+            method: 'GET',
+            headers: {
+              'X-RapidAPI-Key': '4250b39898msh8b6ea7e0fe9f2a1p1acb7cjsn6f12b150f10d',
+              'X-RapidAPI-Host': 'bing-video-search1.p.rapidapi.com'
+            }
+          };
           
-
-            let data=await response.json();
-
-            let videos=data.items.map(video=>video.snippet.title);
-            console.log(videos)
-           setResults(videos)
+        let response=await fetch(`https://bing-video-search1.p.rapidapi.com/videos/search?q=${query}`, options)
+           let data=await response.json();
+           console.log("i",data.value)
+            setResults(data.value.map(a=>a.name))
         
         }catch(e){
             console.log("e:",e)
@@ -46,22 +58,24 @@ export default function SearchBarFour() {
           console.log(searchTerm)
           // Send Axios request here
           fetchSearchResults(searchTerm)
-        }, 3000)
+        }, 500)
     
         return () => clearTimeout(delayDebounceFn)
       }, [searchTerm])
 
   return (
       <>
-      <h1>API Search Optimized</h1>
+      <h1>API Search </h1>
     <Stack spacing={3} sx={{ width: 500 }}>
     <div className="results">
     <Autocomplete
         multiple
         id="tags-filled"
         options={results}
-        // defaultValue={[top100Films[13].title]}
+        //  defaultValue={[top100Films[13].title]}
         freeSolo
+        autoHighlight
+        loading
         renderTags={(value, getTagProps) =>{ 
           setvalues(value)
           console.log(value)
